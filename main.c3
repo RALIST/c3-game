@@ -3,20 +3,19 @@ import std::math;
 
 const SYMBOLS = int[*]{0,1,2,3,4,5,6,7,8,9,10};
 const REEL = int[*]{0,1,2,3,4,5,6,7,8,9,10};
-const SCREEN_WIDTH = 5;
-const SCREEN_HEIGHT = 5;
-const LENGTH = SCREEN_HEIGHT * SCREEN_WIDTH;
+const COLUMNS = 5;
+const ROWS = 5;
+const GRID = COLUMNS * ROWS;
+const SCREEN_WIDTH = 600;
+const SCREEN_HEIGHT = 600;
 const SYMBOL_WIDTH = 100;
 const SYMBOL_HEIGHT = 100;
 const PADDING = 5;
-const SYMBOL_MAX_VELOCITY = 15;
-const SPRITE_WIDTH = 200;
-const SPRITE_HEIGHT = 200;
-const SPRITES_LENGTH = SPRITE_HEIGHT*SPRITE_WIDTH*4;
+const MAX_VELOCITY = 15;
 const SYMBOL_POOL_CAPACITY = 20;
 const char[*] IMAGES = $embed("all_lucky_clover5.png");
 
-def Screen = Symbol[LENGTH];
+def Screen = Symbol[GRID];
 def Color = char[<4>];
 def Vector2 = int[<2>];
 
@@ -70,20 +69,20 @@ fn Symbol* SymbolPool.get(&self, int sym) {
 fn Screen generate_screen(Random random) {
     Screen* screen = mem::new_aligned(Screen);
 
-    for (int i=0; i<LENGTH; i++) {
+    for (int i=0; i<GRID; i++) {
         int rand = random.next_short() % REEL.len;
         int sym = REEL[rand];
 
         Symbol symbol = *symbol_pool.get(sym);
 
-        int colIndex = i % SCREEN_WIDTH;
-        int rowIndex = i / SCREEN_WIDTH;
+        int colIndex = i % COLUMNS;
+        int rowIndex = i / COLUMNS;
 
-        symbol.position.x = colIndex * (SYMBOL_WIDTH + PADDING);
-        symbol.position.y = rowIndex * (SYMBOL_HEIGHT + PADDING);
+        symbol.position.x = colIndex * (SCREEN_WIDTH / COLUMNS + PADDING);
+        symbol.position.y = rowIndex * (SCREEN_HEIGHT / ROWS + PADDING);
 
-        symbol.velocity = {0, SYMBOL_MAX_VELOCITY - colIndex};
-        symbol.currentPosition = {symbol.position.x, symbol.position.y - 100 - SCREEN_HEIGHT * PADDING - SCREEN_HEIGHT * SYMBOL_HEIGHT};
+        symbol.velocity = {0, MAX_VELOCITY - colIndex};
+        symbol.currentPosition = {symbol.position.x, symbol.position.y - 2 * SCREEN_HEIGHT};
         screen[0][i] = symbol;
     }
 

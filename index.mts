@@ -35,11 +35,11 @@ function initWasm(wasm: WebAssembly.WebAssemblyInstantiatedSource): Wasm {
 // extern
 function render_symbol(x: number, y: number, width: number, height: number, sym: number, r: number, g: number, b: number, a: number) {
     game.canvas.fillStyle = `rgba(${r},${g},${b},${a})`
-    game.canvas.fillRect(x + 35, y + 35, width, height)
+    game.canvas.fillRect(x, y, width, height)
 
     game.canvas.fillStyle = "orange"
     game.canvas.font = "48px serif"
-    game.canvas.fillText(sym.toString(), x + width / 2 + 35, y + height / 2 + 35)
+    game.canvas.fillText(sym.toString(), x + width / 2, y + height / 2)
 }
 
 async function init() {
@@ -72,7 +72,7 @@ async function init() {
 function draw(ts: number) {
     const dt = (ts - game.prevTs) * 0.001 // ms
     game.prevTs = ts
-    game.canvas.clearRect(0, 0, 1000, 1000)
+    game.canvas.clearRect(0, 0, 600, 600)
     game.wasm.render(dt)
     window.requestAnimationFrame(draw)
 }
