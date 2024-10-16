@@ -22,9 +22,10 @@ function initWasm(wasm) {
 // extern
 function render_symbol(x, y, width, height, sym, r, g, b, a) {
     game.canvas.fillStyle = `rgba(${r},${g},${b},${a})`;
-    game.canvas.fillRect(x, y, width, height);
+    game.canvas.fillRect(x + 35, y + 35, width, height);
     game.canvas.fillStyle = "orange";
-    game.canvas.fillText(sym.toString(), x + width / 2, y + height / 2);
+    game.canvas.font = "48px serif";
+    game.canvas.fillText(sym.toString(), x + width / 2 + 35, y + height / 2 + 35);
 }
 async function init() {
     const wasm = initWasm(await WebAssembly.instantiateStreaming(fetch('main.wasm'), {

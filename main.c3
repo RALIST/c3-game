@@ -6,10 +6,10 @@ const REEL = int[*]{0,1,2,3,4,5,6,7,8,9,10};
 const SCREEN_WIDTH = 5;
 const SCREEN_HEIGHT = 5;
 const LENGTH = SCREEN_HEIGHT * SCREEN_WIDTH;
-const SYMBOL_WIDTH = 50;
-const SYMBOL_HEIGHT = 50;
+const SYMBOL_WIDTH = 100;
+const SYMBOL_HEIGHT = 100;
 const PADDING = 5;
-const SYMBOL_MAX_VELOCITY = 10;
+const SYMBOL_MAX_VELOCITY = 15;
 const SPRITE_WIDTH = 200;
 const SPRITE_HEIGHT = 200;
 const SPRITES_LENGTH = SPRITE_HEIGHT*SPRITE_WIDTH*4;
@@ -19,6 +19,13 @@ const char[*] IMAGES = $embed("all_lucky_clover5.png");
 def Screen = Symbol[LENGTH];
 def Color = char[<4>];
 def Vector2 = int[<2>];
+
+enum State {
+    READY,
+    PLAYING,
+}
+
+State state;
 
 struct Outcome {
     Screen screen;
@@ -95,6 +102,7 @@ fn void render(int dt) @extern("render") @wasm {
             symbol.currentPosition.y += symbol.velocity.y;
         } else {
             symbol.currentPosition.y = symbol.position.y;
+            state = READY;
         }
 
         render_symbol(symbol.currentPosition, symbol.image.size, symbol.sym, symbol.color);
@@ -103,10 +111,13 @@ fn void render(int dt) @extern("render") @wasm {
 
 extern fn int seed() @extern("seed");
 fn void spin() @extern("spin") @wasm {
-    Lcg32Random rand;
-    random::seed(&&rand, seed());
-    outcome.screen = generate_screen(&&rand);
-    outcome.win = check_win(outcome.screen);
+    if (state != PLAYING) {
+        Lcg32Random rand;
+        random::seed(&&rand, seed());
+        outcome.screen = generate_screen(&&rand);
+        outcome.win = check_win(outcome.screen);
+        state = PLAYING;
+    }
 }
 
 fn void init() @extern("init") @wasm {
@@ -132,4 +143,6 @@ fn void init() @extern("init") @wasm {
         
         symbol_pool.put(symbol);
     }
+
+    state = READY;
 }
