@@ -20,12 +20,11 @@ function initWasm(wasm) {
     };
 }
 // extern
-function render_symbol(x, y, width, height, sym, r, g, b, a) {
-    game.canvas.fillStyle = `rgba(${r},${g},${b},${a})`;
-    game.canvas.fillRect(x, y, width, height);
-    game.canvas.fillStyle = "orange";
-    game.canvas.font = "48px serif";
-    game.canvas.fillText(sym.toString(), x + width / 2, y + height / 2);
+function render_symbol(x, y, width, height, sym, imagePtr) {
+    // game.canvas.fillRect(x, y, width, height)
+    const bytes = new Uint8ClampedArray(game.wasm.memory.buffer, imagePtr, width * height * 4);
+    const data = new ImageData(bytes, width, height);
+    game.canvas.putImageData(data, x, y);
 }
 async function init() {
     const wasm = initWasm(await WebAssembly.instantiateStreaming(fetch('main.wasm'), {
@@ -35,6 +34,7 @@ async function init() {
         }
     }));
     wasm._initialize();
+    wasm.memory.grow(100);
     const app = document.getElementById("app");
     const ctx = app.getContext("2d");
     if (!ctx) {
@@ -47,7 +47,7 @@ async function init() {
     });
     game.wasm.memory.grow(30);
     game.wasm.init();
-    // game.wasm.render(1)
+    game.wasm.spin();
     window.requestAnimationFrame(draw);
 }
 function draw(ts) {
