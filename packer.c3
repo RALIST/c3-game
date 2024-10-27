@@ -8,7 +8,17 @@ extern fn char *stbi_load(ZString filename, int *x, int *y, int *comp, int req_c
 extern fn char *stbir_resize_uint8_srgb(char *ipixels, int iw, int ih, int is, int opixels, int ow, int oh, int os, int en);
 
 const String[] IMAGE_FILES = {
-    "cherry.png"
+    "assets/cherry.png",
+    "assets/heart.png",
+    "assets/clover.png",
+    "assets/diamond.png",
+    "assets/grape.png",
+    "assets/lemon.png",
+    "assets/lucky.png",
+    "assets/melon.png",
+    "assets/orange.png",
+    // "assets/plum.png",
+    // "assets/seven.png"
 };
 
 const SYMBOL_WIDTH = 100;
@@ -26,6 +36,7 @@ fn int main() {
                               0, SYMBOL_WIDTH, SYMBOL_HEIGHT, 0, 4);
         int size = SYMBOL_WIDTH*SYMBOL_HEIGHT*comp;
         usz offset = pack.len();
+
         assets.push({filename, offset, SYMBOL_WIDTH, SYMBOL_HEIGHT, size});
         pack.append_chars((String)resized_pixels[0..size-1]);
         if (pixels == null) {

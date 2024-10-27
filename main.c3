@@ -123,9 +123,10 @@ fn void init() @extern("init") @wasm @if(env::WASM_NOLIBC) {
     for(int i=0;i<SYMBOLS.len;i++) {
         int sym = SYMBOLS[i];
 
+        Asset asset = assets[i%9];
         Image image = {
-            .size = {assets[0].width, assets[0].height},
-            .pixels = (Color*)&pack[0]
+            .size = {asset.width, asset.height},
+            .pixels = (Color*)&pack[asset.offset]
         };
 
         Symbol* symbol = mem::new(Symbol);
