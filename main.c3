@@ -2,6 +2,8 @@ import std::io;
 import std::math;
 import assets;
 
+$exec("./packer");
+
 const SYMBOLS = int[*]{0,1,2,3,4,5,6,7,8,9,10};
 const REEL = int[*]{0,1,2,3,4,5,6,7,8,9,10};
 const COLUMNS = 5;
@@ -10,7 +12,7 @@ const GRID = COLUMNS * ROWS;
 const SCREEN_WIDTH = 600;
 const SCREEN_HEIGHT = 600;
 const PADDING = 5;
-const MAX_VELOCITY = 15;
+const MAX_VELOCITY = 20;
 const SYMBOL_POOL_CAPACITY = 20;
 
 def Screen = Symbol[GRID];
@@ -23,6 +25,13 @@ enum State {
 }
 
 State state;
+
+struct Window {
+    int width, height;
+    Color* pixels;
+}
+
+Window window;
 
 struct Outcome {
     Screen screen;
@@ -38,8 +47,6 @@ struct Image {
     Vector2 size;
     Color* pixels;
 }
-
-$exec("./packer");
 
 struct Symbol {
     Image image;
@@ -77,12 +84,13 @@ fn Screen generate_screen(Random random) {
 
         int colIndex = i % COLUMNS;
         int rowIndex = i / COLUMNS;
-
-        symbol.position.x = colIndex * (SCREEN_WIDTH / COLUMNS + PADDING);
-        symbol.position.y = rowIndex * (SCREEN_HEIGHT / ROWS + PADDING);
+        int paddingX = window.width/100;
+        int paddingY = window.height/100;
+        symbol.position.x = colIndex * (window.width/ 3 / COLUMNS + paddingX) + window.width/3;
+        symbol.position.y = rowIndex * (window.height / 2 / ROWS + paddingY) + window.height/4;
 
         symbol.velocity = {0, MAX_VELOCITY - colIndex};
-        symbol.currentPosition = {symbol.position.x, symbol.position.y - 2 * SCREEN_HEIGHT};
+        symbol.currentPosition = {symbol.position.x, 0};
         screen[0][i] = symbol;
     }
 
@@ -94,8 +102,22 @@ fn int check_win(Screen) {
 }
 
 extern fn void render_symbol(Vector2, Vector2, int, Color*);
+extern fn void render_win(int, int, int);
+extern fn void render_spin_button(int, int, int, int);
+extern fn void render_window(Color*);
+extern fn void log(String);
+
+char[] frame = $embed("assets/frame.png");
 
 fn void render(int dt) @extern("render") @wasm @if(env::WASM_NOLIBC) {
+    window.pixels = mem::calloc(Color.sizeof*window.width*window.height);
+    defer mem::free(window.pixels);
+
+    Color* frame_pixels = (Color*)&frame[0];
+    for(int i = 0; i < frame_pixels.len; i++) {
+        window.pixels[i] = frame_pixels[i];
+    }
+
     foreach(int i, &symbol: outcome.screen) {
         if (symbol.currentPosition.y < symbol.position.y) {
             symbol.currentPosition.y += symbol.velocity.y;
@@ -104,8 +126,22 @@ fn void render(int dt) @extern("render") @wasm @if(env::WASM_NOLIBC) {
             state = READY;
         }
 
-        render_symbol(symbol.currentPosition, symbol.image.size, symbol.sym, symbol.image.pixels);
+        if (symbol.currentPosition.y < window.height/4) {
+            continue;
+        }
+
+        Color* pixels = symbol.image.pixels;
+        for(int x = 0; x < symbol.image.size.x; x++) {
+            for (int y = 0; y < symbol.image.size.y; y++) {
+                int destP = (symbol.currentPosition.y + y) * window.width + symbol.currentPosition.x + x;
+                int srcP = y*symbol.image.size.x+x;
+                window.pixels[destP] = pixels[srcP];
+            }
+        }
     }
+    
+    render_window(window.pixels);
+
 }
 
 extern fn int seed() @extern("seed");
@@ -119,11 +155,14 @@ fn void spin() @extern("spin") @wasm @if(env::WASM_NOLIBC) {
     }
 }
 
-fn void init() @extern("init") @wasm @if(env::WASM_NOLIBC) {
+fn void init(int width, int height) @extern("init") @wasm @if(env::WASM_NOLIBC) {
+    window.width = width;
+    window.height = height;
+
     for(int i=0;i<SYMBOLS.len;i++) {
         int sym = SYMBOLS[i];
 
-        Asset asset = assets[i%9];
+        Asset asset = assets[i];
         Image image = {
             .size = {asset.width, asset.height},
             .pixels = (Color*)&pack[asset.offset]
@@ -140,9 +179,8 @@ fn void init() @extern("init") @wasm @if(env::WASM_NOLIBC) {
 }
 
 fn int main() @if(!env::WASM_NOLIBC) {
-    for(int i=0; i < assets.len; i++) {
-        io::printfn("Asset: %d", assets[i].size);
-    }
+    Color* frame_pixels = (Color*)&frame[0];
+    io::printn(*frame_pixels);
     
     return 0;
 }

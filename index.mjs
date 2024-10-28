@@ -1,9 +1,9 @@
 class Game {
-    canvas;
+    canvasCtx;
     wasm;
     prevTs;
     constructor(canvas, wasm) {
-        this.canvas = canvas;
+        this.canvasCtx = canvas;
         this.wasm = wasm;
         this.prevTs = 0;
     }
@@ -19,41 +19,52 @@ function initWasm(wasm) {
         init: wasm.instance.exports.init,
     };
 }
-// extern
-function render_symbol(x, y, width, height, sym, imagePtr) {
-    // game.canvas.fillRect(x, y, width, height)
-    const bytes = new Uint8ClampedArray(game.wasm.memory.buffer, imagePtr, width * height * 4);
+async function render_window(ptr) {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const bytes = new Uint8ClampedArray(game.wasm.memory.buffer, ptr, width * height * 4);
     const data = new ImageData(bytes, width, height);
-    game.canvas.putImageData(data, x, y);
+    const bmp = await createImageBitmap(data);
+    game.canvasCtx.imageSmoothingEnabled = true;
+    game.canvasCtx.drawImage(bmp, 0, 0);
 }
 async function init() {
     const wasm = initWasm(await WebAssembly.instantiateStreaming(fetch('main.wasm'), {
         "env": {
             seed: () => performance.now(),
-            render_symbol
+            render_window,
+            log: console.log
         }
     }));
     wasm._initialize();
     wasm.memory.grow(100);
     const app = document.getElementById("app");
-    const ctx = app.getContext("2d");
+    const ctx = app.getContext("2d", { alpha: false });
     if (!ctx) {
         throw new Error("Ctx not found");
     }
+    app.width = window.innerWidth;
+    app.height = window.innerHeight;
     game = new Game(ctx, wasm);
     const button = document.getElementById("spin");
     button?.addEventListener("click", () => {
         game.wasm.spin();
     });
-    game.wasm.memory.grow(30);
-    game.wasm.init();
+    document.addEventListener("keydown", (event) => {
+        if (event.key == " " || event.code == "Space" || event.keyCode == 32) {
+            game.wasm.spin();
+            event.preventDefault();
+        }
+    });
+    game.wasm.memory.grow(100);
+    game.wasm.init(window.innerWidth, window.innerHeight);
     game.wasm.spin();
     window.requestAnimationFrame(draw);
 }
 function draw(ts) {
     const dt = (ts - game.prevTs) * 0.001; // ms
     game.prevTs = ts;
-    game.canvas.clearRect(0, 0, 600, 600);
+    game.canvasCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     game.wasm.render(dt);
     window.requestAnimationFrame(draw);
 }

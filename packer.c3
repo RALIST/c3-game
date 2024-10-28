@@ -17,8 +17,8 @@ const String[] IMAGE_FILES = {
     "assets/lucky.png",
     "assets/melon.png",
     "assets/orange.png",
-    // "assets/plum.png",
-    // "assets/seven.png"
+    "assets/plum.png",
+    "assets/seven.png",
 };
 
 const SYMBOL_WIDTH = 100;
@@ -33,7 +33,7 @@ fn int main() {
         int comp = 4;
         char *pixels = stbi_load((ZString)filename, &x, &y, null, comp);
         char *resized_pixels = stbir_resize_uint8_srgb(pixels, x, y, 0,
-                              0, SYMBOL_WIDTH, SYMBOL_HEIGHT, 0, 4);
+                            0, SYMBOL_WIDTH, SYMBOL_HEIGHT, 0, 4);
         int size = SYMBOL_WIDTH*SYMBOL_HEIGHT*comp;
         usz offset = pack.len();
 
