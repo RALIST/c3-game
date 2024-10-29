@@ -25,15 +25,25 @@ async function render_window(ptr) {
     const bytes = new Uint8ClampedArray(game.wasm.memory.buffer, ptr, width * height * 4);
     const data = new ImageData(bytes, width, height);
     const bmp = await createImageBitmap(data);
-    game.canvasCtx.imageSmoothingEnabled = true;
     game.canvasCtx.drawImage(bmp, 0, 0);
+}
+function render_win(symbol, amount, x, y) {
+    game.canvasCtx.fillStyle = "white";
+    game.canvasCtx.font = "32px serif";
+    game.canvasCtx.fillText(`SYMBOL: ${symbol} WIN: ${amount}`, x, y);
+}
+function render_balance(amount, x, y) {
+    game.canvasCtx.fillStyle = "white";
+    game.canvasCtx.font = "32px serif";
+    game.canvasCtx.fillText(`BALANCE: ${amount}`, x, y);
 }
 async function init() {
     const wasm = initWasm(await WebAssembly.instantiateStreaming(fetch('main.wasm'), {
         "env": {
             seed: () => performance.now(),
             render_window,
-            log: console.log
+            render_win,
+            render_balance
         }
     }));
     wasm._initialize();
@@ -61,11 +71,20 @@ async function init() {
     game.wasm.spin();
     window.requestAnimationFrame(draw);
 }
+let frames = 0;
+let op = 0.01;
 function draw(ts) {
     const dt = (ts - game.prevTs) * 0.001; // ms
     game.prevTs = ts;
     game.canvasCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     game.wasm.render(dt);
+    game.canvasCtx.fillStyle = `rgba(255, 255, 255, ${frames})`;
+    frames += op;
+    if (frames > 1 || frames <= 0) {
+        op = -op;
+    }
+    game.canvasCtx.font = "32px serif";
+    game.canvasCtx.fillText("Press SPACE to spin", window.innerWidth / 3, window.innerHeight / 5);
     window.requestAnimationFrame(draw);
 }
 init();

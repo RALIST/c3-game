@@ -7,7 +7,7 @@ import assets;
 extern fn char *stbi_load(ZString filename, int *x, int *y, int *comp, int req_comp);
 extern fn char *stbir_resize_uint8_srgb(char *ipixels, int iw, int ih, int is, int opixels, int ow, int oh, int os, int en);
 
-const String[] IMAGE_FILES = {
+const String[] SYMBOL_FILES = {
     "assets/cherry.png",
     "assets/heart.png",
     "assets/clover.png",
@@ -28,7 +28,7 @@ fn int main() {
     Assets assets;
     DString pack;
 
-    foreach(filename: IMAGE_FILES) {
+    foreach(filename: SYMBOL_FILES) {
         int x, y;
         int comp = 4;
         char *pixels = stbi_load((ZString)filename, &x, &y, null, comp);
